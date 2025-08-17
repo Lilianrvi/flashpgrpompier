@@ -2,721 +2,414 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Périmètres de Sécurité (IA Officier)</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Compass - L'Architecture de l'Esprit</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="favicon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
-        /* ------------ VARIABLES ------------ */
-        :root{
-            --light-color: #f7f7f7;
-            --dark-color: #2b2b2b;
-            --dark-icon-color: #fff;
-            --light-icon-color: #FFDE59;
+        /* --- Import des Polices --- */
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@300;400;500&display=swap');
+
+        /* --- Style Général --- */
+        :root {
+            --bg-color: #121212;
+            --text-color: #EAEAEA;
+            --accent-color: #C0A062;
+            --card-bg-color: #1d1d1d;
         }
 
-        html, body {
-            height: 100%;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Montserrat', sans-serif;
             overflow: hidden;
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--light-color);
-            transition: background-color .3s ease;
-        }
-        #app-container {
+            height: 100vh;
             display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        .app-header {
-            background-color: #333;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            flex-shrink: 0;
-            transition: background-color .3s ease;
-        }
-        main {
-            flex-grow: 1;
-            position: relative;
-        }
-        #map {
-            height: 100%;
-            width: 100%;
-            background: #ddd;
-        }
-        .app-footer {
-            background-color: #333;
-            color: #ccc;
-            padding: 8px;
-            text-align: center;
-            font-size: 10px;
-            flex-shrink: 0;
-            transition: background-color .3s ease;
-        }
-        .app-footer strong {
-            color: #fff;
-            font-weight: 500;
-        }
-        .info-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            max-width: 220px;
-            font-size: 14px;
-            transition: background-color .3s ease, color .3s ease, border .3s ease;
-        }
-        .legend {
-            line-height: 1.8;
-            color: #555;
-        }
-        .legend i {
-            width: 16px;
-            height: 16px;
-            float: left;
-            margin-right: 8px;
-            opacity: 0.7;
-            border-radius: 4px;
-        }
-        h3 {
-            margin: 0 0 10px;
-            color: #333;
-            font-size: 16px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 8px;
-            transition: color .3s ease, border-color .3s ease, margin .4s ease, padding .4s ease;
-        }
-        .checkbox-container {
-            margin-top: 10px;
-        }
-        .map-button {
-            position: absolute;
-            z-index: 1000;
-            background: white;
-            padding: 8px;
-            border-radius: 50%;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            transition: background-color .3s ease;
+            align-items: center;
+            text-align: center;
         }
-        .geolocate-btn {
-            bottom: 20px;
-            left: 10px;
-        }
-        .reset-btn {
-            bottom: 70px;
-            left: 10px;
-        }
-        .share-btn {
-            bottom: 120px;
-            left: 10px;
-        }
-        
-        .loader-overlay {
+
+        section {
+            width: 100%;
+            height: 100%;
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 2000;
-            display: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 20px;
-            text-align: center;
-            backdrop-filter: blur(5px);
-        }
-        .loader-overlay.visible {
-            display: flex;
-        }
-        .spinner {
-          border: 4px solid rgba(255, 255, 255, 0.3);
-          border-radius: 50%;
-          border-top: 4px solid #fff;
-          width: 40px;
-          height: 40px;
-          animation: spin 1s linear infinite;
-          margin-bottom: 15px;
-        }
-        #loader-text {
-            font-weight: 500;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-        }
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        .weather-widget {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.85);
-            padding: 8px 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            backdrop-filter: blur(5px);
-            transition: background-color .3s ease, color .3s ease, border .3s ease;
-        }
-        #wind-direction {
-            font-size: 16px;
-            font-weight: 700;
-            margin-right: 8px;
-            width: 30px;
-            text-align: center;
-        }
-        #wind-speed {
-            font-size: 14px;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-        
-        #coords-widget {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.7);
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            color: #333;
-        }
-        .leaflet-control-scale-line {
-            background: rgba(255, 255, 255, 0.7);
-            color: #333;
-            border-color: #555;
+            padding: 2rem;
+            overflow-y: auto;
         }
 
-        /* -------------- DESIGN MODE NUIT (AJUSTÉ) -------------- */
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 10px;
+        .hidden {
+            display: none;
+            opacity: 0;
         }
-        .btn{
-            background-color: #fff;
-            width: 4.5em;
-            height: 2.2em;
-            border-radius: 10em;
-            padding: 0 0.2em;
-            box-shadow: inset 0 2px 15px rgba(0,0,0, .1),
-                        inset 0 2px 2px rgba(0,0,0, .1),
-                        inset 0 -1px 1px rgba(0,0,0, .1);
-            position: relative;
-            display: flex;
-            align-items: center;
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+        }
+
+        p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .action-btn {
+            background: none;
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 15px 35px;
+            font-size: 1.2rem;
+            font-family: 'Playfair Display', serif;
             cursor: pointer;
-            box-sizing: border-box;
+            transition: all 0.3s ease;
+            margin-top: 2rem;
+            letter-spacing: 1px;
         }
-        .btn__indicator{
-            background-color: #fff;
-            width: 1.8em;
-            height: 1.8em;
-            border-radius: 50%;
+
+        .action-btn:hover {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            box-shadow: 0 0 25px rgba(192, 160, 98, 0.5);
+        }
+
+        /* --- Section Accueil --- */
+        #accueil .content {
+            position: relative;
+            z-index: 10;
+        }
+
+        #particles-js {
             position: absolute;
-            left: 0.2em;
-            box-shadow: 0 2px 10px rgba(0,0,0, .2);
-            transition: transform .3s ease;
-        }
-        .btn__icon-container{
             width: 100%;
             height: 100%;
+            z-index: 1;
+        }
+        
+        /* --- Section Quiz --- */
+        #quiz-content {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 4px;
+            background-color: var(--card-bg-color);
+            margin-bottom: 2rem;
+            border-radius: 2px;
+        }
+
+        #progress-bar-inner {
+            width: 0%;
+            height: 100%;
+            background-color: var(--accent-color);
+            transition: width 0.5s ease;
+        }
+        
+        #question-text {
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin-bottom: 3rem;
+        }
+        
+        #answers-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .answer-card {
+            background-color: var(--card-bg-color);
+            border: 1px solid #333;
+            padding: 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease-out;
+            text-align: left;
+        }
+        
+        .answer-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+        }
+
+        /* --- Section Résultat --- */
+        #resultat-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .profile-title {
+            font-size: 1.5rem;
+            font-weight: 300;
+        }
+        
+        #board-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 2rem;
+            width: 100%;
+        }
+        
+        #board {
+            width: 320px;
+            min-width: 280px;
+        }
+        
+        .opening-details {
+            max-width: 400px;
+            text-align: left;
+        }
+        
+        .opening-details h3 {
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .opening-details p {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        #secondary-recommendations {
+            margin-top: 2rem;
+            width: 100%;
+            border-top: 1px solid #333;
+            padding-top: 2rem;
+        }
+        
+        #secondary-recommendations h2 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 400;
+            margin-bottom: 1.5rem;
+        }
+        
+        .recommendations-grid {
             display: flex;
             justify-content: center;
-            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
         }
-        .btn__icon{
-            color: var(--light-icon-color);
-            font-size: 1rem;
-        }
-        .btn__icon.animated{
-            animation: spin 0.5s;
-        }
-        @keyframes spin{
-            to { transform: rotate(360deg); }
-        }
-
-        /* -------------- DARKMODE STYLES (AJUSTÉ) -------------- */
-        body.dark-mode {
-            background-color: var(--dark-color);
-        }
-        .dark-mode .leaflet-tile {
-            filter: invert(1) hue-rotate(180deg) brightness(95%) contrast(90%);
-        }
-        .dark-mode .app-header, .dark-mode .app-footer {
-            background-color: #1a1a1a;
-        }
-        .dark-mode .info-panel, .dark-mode .weather-widget {
-            background-color: rgba(40, 40, 40, 0.85);
-            color: #f0f0f0;
-            border: 1px solid #555;
-        }
-        .dark-mode h3, .dark-mode .legend {
-            color: #f0f0f0;
-        }
-        .dark-mode .map-button {
-            background-color: #282828;
-        }
-        .dark-mode .map-button svg path {
-            fill: #f0f0f0;
-        }
-        .dark-mode .btn{
-            box-shadow: inset 0 2px 15px rgba(0,0,0, .3),
-                        inset 2px 0 2px rgba(0,0,0, .3),
-                        inset 0 -1px 1px rgba(0,0,0, .3);
-        }
-        .dark-mode .btn__indicator{
-            transform: translateX(2.3em);
-            background-color: var(--dark-color);
-            box-shadow: 0 2px 10px rgba(0,0,0, .3);
-        }
-        .dark-mode .btn__icon{
-            color: var(--dark-icon-color);
-        }
-        .dark-mode #coords-widget {
-            background: rgba(40, 40, 40, 0.7);
-            color: #f0f0f0;
-        }
-        .dark-mode .leaflet-control-scale-line {
-            background: rgba(40, 40, 40, 0.7);
-            color: #f0f0f0;
-            border-color: #aaa;
+        
+        .secondary-card {
+            background-color: var(--card-bg-color);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #333;
+            min-width: 220px;
         }
 
-        /* -------------- NOUVEAUX STYLES POUR LA LÉGENDE RÉ rétractable -------------- */
-        #legend-toggle {
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        #legend-toggle i {
-            transition: transform 0.3s ease;
-            font-size: 14px;
-        }
-        #legend-content {
-            transition: max-height 0.4s ease-out, opacity 0.3s 0.1s, margin-top 0.4s ease;
-            max-height: 400px;
-            overflow: hidden;
-            opacity: 1;
-        }
-        .info-panel.collapsed #legend-content {
-            max-height: 0;
-            opacity: 0;
-            margin-top: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease-in, opacity 0.2s, margin-top 0.4s ease;
-        }
-        .info-panel.collapsed h3 {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: 1px solid transparent;
-        }
-        .info-panel.collapsed #legend-toggle i {
-            transform: rotate(-180deg);
+        .secondary-card h4 {
+            font-family: 'Playfair Display', serif;
+            color: var(--accent-color);
+            font-size: 1.2rem;
         }
 
-
-        @media (max-width: 600px) {
-            .app-header { font-size: 14px; padding: 8px; }
-            .app-footer { font-size: 9px; padding: 5px; }
-            .info-panel {
-                max-width: 160px;
-                font-size: 12px;
-            }
-            h3 {
-                font-size: 14px;
-            }
-            .geolocate-btn {
-                bottom: 10px;
-            }
-             .reset-btn {
-                bottom: 60px;
-            }
-             .share-btn {
-                bottom: 110px;
-            }
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            p { font-size: 1rem; }
+            .answer-card { padding: 1rem; }
+            #board { width: 100%; max-width: 320px; }
+            section { padding: 1rem; }
         }
+
     </style>
 </head>
 <body>
-    <div id="app-container">
-        <header class="app-header">
-            FLASH PGR
-        </header>
-        <main>
-            <div id="map"></div>
-            <div id="loader" class="loader-overlay">
-                <div class="spinner"></div>
-                <div id="loader-text">Réflexion en cours...</div>
+
+    <section id="accueil">
+        <div id="particles-js"></div>
+        <div class="content">
+            <h1>L'Architecture de l'Esprit</h1>
+            <p>Votre personnalité définit votre style de jeu. Découvrez l'ouverture d'échecs qui vous ressemble.</p>
+            <button id="start-btn" class="action-btn">Commencer l'analyse</button>
+        </div>
+    </section>
+
+    <section id="quiz" class="hidden">
+        <div id="quiz-content">
+            <div id="progress-bar"><div id="progress-bar-inner"></div></div>
+            <h2 id="question-text"></h2>
+            <div id="answers-container"></div>
+        </div>
+    </section>
+
+    <section id="resultat" class="hidden">
+        <div id="resultat-content">
+            <div>
+                <p class="profile-title" id="profile-title"></p>
+                <h1 id="opening-name"></h1>
             </div>
-            <div id="weather-widget" class="weather-widget">
-                <div id="wind-direction">--</div>
-                <div id="wind-speed">-- km/h</div>
-            </div>
-            <div class="info-panel" id="info-panel">
-                <h3 id="legend-toggle">Périmètres de Sécurité <i class="fa fa-chevron-up"></i></h3>
-                <div id="legend-content">
-                    <div class="legend">
-                        <div><img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png" style="width:12px; height:20px; margin-left:2px; margin-right: 10px; float:left;">Emplacement fuite de gaz</div>
-                        <div style="clear: both;"></div>
-                        <div class="checkbox-container">
-                            <label><input type="checkbox" id="pgr50m" checked> <i style="background: #ff0000;"></i>Zone d'exclusion (50 m)</label><br>
-                            <label><input type="checkbox" id="pgr100m" checked> <i style="background: #ff9900;"></i>Zone contrôlée (100m)</label><br>
-                            <label><input type="checkbox" id="cspe110m"> <i style="background: #0000ff;"></i>ZE CSPE 110 m</label><br>
-                            <label><input type="checkbox" id="cspe180m"> <i style="background: #9900ff;"></i>ZC CSPE 180</label>
-                        </div>
-                    </div>
-                    <div class="toggle-container">
-                        <span>Mode Nuit</span>
-                        <div class="btn">
-                            <div class="btn__indicator">
-                                <div class="btn__icon-container">
-                                    <i class="btn__icon fa"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div id="board-container">
+                <div id="board"></div>
+                <div class="opening-details">
+                    <h3>Description</h3>
+                    <p id="opening-description"></p>
+                    <h3>Pourquoi elle vous correspond</h3>
+                    <p id="opening-reasoning"></p>
                 </div>
             </div>
-            <div class="map-button geolocate-btn" onclick="geolocate()" title="Me géolocaliser">
-                <svg width="24" height="24" viewBox="0 0 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 8C9.79 8 8 9.79 8 12C8 14.21 9.79 16 12 16C14.21 16 16 14.21 16 12C16 9.79 14.21 8 12 8ZM20.94 11C20.48 6.83 17.17 3.52 13 3.06V1H11V3.06C6.83 3.52 3.52 6.83 3.06 11H1V13H3.06C3.52 17.17 6.83 20.48 11 20.94V23H13V20.94C17.17 20.48 20.48 17.17 20.94 13H23V11H20.94ZM12 19C8.13 19 5 15.87 5 12C5 8.13 8.13 5 12 5C15.87 5 19 8.13 19 12C19 15.87 15.87 19 12 19Z" fill="red"/>
-                </svg>
-            </div>
-             <div class="map-button reset-btn" onclick="resetMap()" title="Réinitialiser la carte">
-                <svg width="24" height="24" viewBox="0 0 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="#555"/>
-                </svg>
-            </div>
-            <div class="map-button share-btn" onclick="shareSituation()" title="Partager la situation">
-                <svg width="24" height="24" viewBox="0 0 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z" fill="#555"/>
-                </svg>
-            </div>
-            <div id="coords-widget">Lat: --, Lng: --</div>
-        </main>
-        <footer class="app-footer">
-            Application libre de droit - <strong>Cette application ne remplace pas l'analyse terrain.</strong>
-        </footer>
-    </div>
+            <div id="secondary-recommendations"></div>
+            <button id="redo-btn" class="action-btn">Refaire le test</button>
+        </div>
+    </section>
 
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // --- INITIALISATION DE LA CARTE ---
-            const map = L.map('map').setView([45.5256, 4.8748], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                maxZoom: 19
-            }).addTo(map);
+    document.addEventListener('DOMContentLoaded', () => {
 
-            let sourceMarker = null;
-            let perimeterLayers = [];
-            let windLayer = null;
-            let thinkingInterval = null;
-            let isUpdating = false;
-            let lastWindData = null;
-            
-            const VIENNE_COORDS = { lat: 45.525, lon: 4.874 };
-            
-            const redIcon = new L.Icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            });
+        particlesJS('particles-js', { "particles": { "number": { "value": 60, "density": { "enable": true, "value_area": 800 } }, "color": { "value": "#ffffff" }, "shape": { "type": "circle" }, "opacity": { "value": 0.5, "random": false }, "size": { "value": 2, "random": true }, "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.4, "width": 1 }, "move": { "enable": true, "speed": 2, "direction": "none", "out_mode": "out" } }, "interactivity": { "events": { "onhover": { "enable": true, "mode": "grab" }, "resize": true }, "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } } } }, "retina_detect": true });
 
-            // --- FONCTIONS UTILITAIRES ---
-            function calculatePointOnCircle(center, radius, bearingDeg) {
-                const bearingRad = bearingDeg * Math.PI / 180;
-                const latRad = center.lat * Math.PI / 180;
+        const openingsDB = [{"id":1,"nom":"Partie Italienne","pour":"Blancs","tags":["Stratégique","Ouvert","Classique"],"description":"Une des plus anciennes ouvertures. Les Blancs développent rapidement leurs pièces, contrôlent le centre et préparent une attaque dans un cadre logique et structuré.","profilUtilisateur":"Idéale si vous aimez construire votre avantage pas à pas, avec des plans clairs et un jeu solide basé sur les principes fondamentaux.","fen":"r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3"},{"id":2,"nom":"Partie Espagnole (Ruy Lopez)","pour":"Blancs","tags":["Stratégique","Positionnel","Complexe"],"description":"Une ouverture sophistiquée où les Blancs exercent une pression durable. Elle mène à des parties riches et profondes.","profilUtilisateur":"Parfaite pour le joueur patient qui aime étouffer son adversaire lentement et apprécie les nuances positionnelles complexes.","fen":"r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3"},{"id":3,"nom":"Gambit du Roi","pour":"Blancs","tags":["Agressif","Tactique","Risqué"],"description":"Une ouverture romantique et audacieuse. Les Blancs sacrifient un pion pour lancer une attaque rapide et dévastatrice.","profilUtilisateur":"Pour les joueurs créatifs et combatifs qui aiment prendre des risques et qui privilégient l'initiative à la sécurité.","fen":"rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq - 0 2"},{"id":4,"nom":"Système de Londres","pour":"Blancs","tags":["Solide","Universel","Positionnel"],"description":"Un système fiable où les Blancs adoptent une configuration solide, quel que soit le plan des Noirs. Il est réputé pour sa sécurité.","profilUtilisateur":"Excellent choix si vous préférez éviter les longues études théoriques et cherchez un plan de jeu universel, solide et facile à comprendre.","fen":"rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PP2PPPP/RN1QKBNR b KQkq - 1 2"},{"id":5,"nom":"Ouverture Anglaise","pour":"Blancs","tags":["Flexible","Hypermoderne","Positionnel"],"description":"Les Blancs contrôlent le centre depuis le flanc. Cette ouverture est très flexible et peut se transformer en de nombreuses autres structures.","profilUtilisateur":"Pour le joueur rusé et adaptable qui aime sortir des sentiers battus et comprendre la stratégie profonde.","fen":"rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b KQkq - 0 1"},{"id":6,"nom":"Défense Sicilienne","pour":"Noirs","tags":["Agressif","Tactique","Contre-attaque"],"description":"La réponse la plus combative à 1.e4. Les Noirs créent un déséquilibre immédiat pour se battre pour la victoire.","profilUtilisateur":"Si vous êtes un combattant dans l'âme, que vous n'avez pas peur de la complexité et que vous voulez jouer pour le gain avec les Noirs.","fen":"rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"},{"id":7,"nom":"Défense Française","pour":"Noirs","tags":["Solide","Contre-attaque","Stratégique"],"description":"Une défense robuste. Les Noirs créent une chaîne de pions solide et attendent le bon moment pour lancer une contre-attaque.","profilUtilisateur":"Parfaite si vous êtes un joueur résilient et stratégique. Vous aimez avoir une position solide et frapper au moment opportun.","fen":"rnbqkbnr/pppp1ppp/4p3/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"},{"id":8,"nom":"Défense Caro-Kann","pour":"Noirs","tags":["Solide","Défensif","Positionnel"],"description":"Réputée pour être l'une des défenses les plus sûres. Les Noirs visent une structure de pions saine et un développement sans faille.","profilUtilisateur":"Pour le joueur prudent et méthodique qui valorise la sécurité par-dessus tout et vise une technique supérieure en finale.","fen":"rnbqkbnr/pp1ppppp/2p5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"},{"id":9,"nom":"Défense Est-Indienne","pour":"Noirs","tags":["Agressif","Hypermoderne","Contre-attaque"],"description":"Une défense ambitieuse où les Noirs permettent aux Blancs de construire un grand centre, pour mieux le détruire par la suite.","profilUtilisateur":"Idéale pour le joueur dynamique qui n'a pas peur de céder de l'espace pour créer des opportunités d'attaque explosives.","fen":"rnbq1rk1/ppppppbp/5np1/8/2PP4/2N5/PP2PPPP/R1BQKBNR w KQ - 2 5"}];
+
+        const quizQuestions = [ { question: "Face à un défi, quelle est votre approche ?", answers: [ { text: "J'analyse tout pour bâtir un plan solide à long terme.", tags: ["Stratégique", "Positionnel"] }, { text: "Je cherche une solution directe et percutante, même si elle est risquée.", tags: ["Agressif", "Tactique"] }, { text: "Je m'assure que ma base est sécurisée avant d'avancer.", tags: ["Solide", "Défensif"] } ]}, { question: "Qu'est-ce qui vous procure le plus de satisfaction dans un jeu ?", answers: [ { text: "Voir un plan complexe se dérouler parfaitement.", tags: ["Stratégique", "Flexible"] }, { text: "Surprendre l'adversaire avec une action brillante et inattendue.", tags: ["Tactique", "Agressif"] }, { text: "Frustrer systématiquement toutes les tentatives de mon adversaire.", tags: ["Solide", "Contre-attaque"] } ]}, { question: "Quel type d'environnement préférez-vous ?", answers: [ { text: "Structuré et prévisible, où je peux tout contrôler.", tags: ["Positionnel", "Classique"] }, { text: "Dynamique et chaotique, plein d'opportunités.", tags: ["Ouvert", "Tactique"] }, { text: "Flexible, où je peux m'adapter à la situation depuis les coulisses.", tags: ["Hypermoderne", "Flexible"] } ]} ];
+
+        const state = { currentQuestion: 0, userTags: [] };
+
+        const accueilSection = document.getElementById('accueil');
+        const quizSection = document.getElementById('quiz');
+        const resultatSection = document.getElementById('resultat');
+        const startBtn = document.getElementById('start-btn');
+        const redoBtn = document.getElementById('redo-btn');
+
+        startBtn.addEventListener('click', startQuiz);
+        redoBtn.addEventListener('click', resetQuiz);
+
+        function startQuiz() {
+            gsap.to(accueilSection, { opacity: 0, duration: 0.5, onComplete: () => {
+                accueilSection.classList.add('hidden');
+                quizSection.classList.remove('hidden');
+                gsap.from(quizSection, { opacity: 0, duration: 0.5 });
+                displayQuestion();
+            }});
+        }
+
+        function displayQuestion() {
+            const questionData = quizQuestions[state.currentQuestion];
+            const quizContent = document.getElementById('quiz-content');
+            
+            gsap.to(quizContent, { opacity: 0, duration: 0.3, onComplete: () => {
+                const progress = ((state.currentQuestion) / quizQuestions.length) * 100;
+                document.getElementById('progress-bar-inner').style.width = `${progress}%`;
                 
-                const dLat = radius * Math.cos(bearingRad);
-                const dLon = radius * Math.sin(bearingRad);
-
-                const newLat = center.lat + (dLat / 111320);
-                const newLng = center.lng + (dLon / (111320 * Math.cos(latRad)));
-
-                return L.latLng(newLat, newLng);
-            }
-
-            function degreesToCardinal(deg) {
-                const directions = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
-                const index = Math.round((deg || 0) / 45) % 8;
-                return directions[index];
-            }
-            
-            async function getWindData(lat, lon) {
-                const url = `https://api.open-meteo.com/v1/meteofrance?latitude=${lat}&longitude=${lon}&hourly=wind_speed_10m,wind_direction_10m`;
-                try {
-                    const response = await fetch(url);
-                    const data = await response.json();
-                    if (data.hourly && data.hourly.time) {
-                        const now = new Date();
-                        const currentHourISO = now.toISOString().substring(0, 13) + ":00";
-                        const hourIndex = data.hourly.time.findIndex(t => t === currentHourISO);
-                        const index = hourIndex !== -1 ? hourIndex : 0;
-                        
-                        const speed = data.hourly.wind_speed_10m[index];
-                        const deg = data.hourly.wind_direction_10m[index];
-                        
-                        lastWindData = { speed: speed, deg: deg };
-                        return lastWindData;
-                    }
-                    return null;
-                } catch (error) {
-                    console.error("Erreur de l'API Météo:", error);
-                    return null;
-                }
-            }
-            
-            async function updateWeatherWidget(lat, lon) {
-                const data = await getWindData(lat, lon);
-                if (data) {
-                    const windSpeedKmh = (data.speed || 0).toFixed(1);
-                    const windDirectionText = degreesToCardinal(data.deg);
-                    document.getElementById('wind-direction').textContent = windDirectionText;
-                    document.getElementById('wind-speed').textContent = `${windSpeedKmh} km/h`;
-                }
-            }
-
-            // --- GESTION DE L'AFFICHAGE SUR LA CARTE ---
-            async function updateMap(latlng, showPopup = false) {
-                if (isUpdating) return;
-                isUpdating = true;
-
-                const loader = document.getElementById('loader');
-                const loaderText = document.getElementById('loader-text');
-                
-                const thinkingMessages = [
-                    "Analyse du secteur...",
-                    "Récupération des données météo...",
-                ];
-                let messageIndex = 0;
-
-                try {
-                    loaderText.textContent = thinkingMessages[0];
-                    loader.classList.add('visible');
-                    thinkingInterval = setInterval(() => {
-                        messageIndex = (messageIndex + 1) % thinkingMessages.length;
-                        loaderText.textContent = thinkingMessages[messageIndex];
-                    }, 1000);
-                    
-                    await updateWeatherWidget(latlng.lat, latlng.lng);
-
-                    // Nettoyage complet
-                    resetMap();
-
-                    sourceMarker = L.marker(latlng, { icon: redIcon }).addTo(map);
-                    if (showPopup) {
-                        sourceMarker.bindPopup("Emplacement à priori de la fuite, de gaz").openPopup();
-                    }
-
-                    const perimeters = [
-                        { radius: 50, color: '#ff0000', id: 'pgr50m' },
-                        { radius: 100, color: '#ff9900', id: 'pgr100m' },
-                        { radius: 110, color: '#0000ff', id: 'cspe110m' },
-                        { radius: 180, color: '#9900ff', id: 'cspe180m' }
-                    ];
-
-                    let circle100m = null;
-                    perimeters.forEach(p => {
-                        const checkbox = document.getElementById(p.id);
-                        if (!checkbox || checkbox.checked) {
-                            const circle = L.circle(latlng, {
-                                color: p.color,
-                                fillColor: p.color,
-                                fillOpacity: 0.2,
-                                radius: p.radius
-                            }).addTo(map);
-                            perimeterLayers.push(circle);
-                            if (p.radius === 100) {
-                                circle100m = circle;
-                            }
-                        }
-                    });
-
-                    const wind = await getWindData(latlng.lat, latlng.lng);
-                    
-                    if (wind && typeof wind.deg === 'number') {
-                        const gasTravelDirection = (wind.deg + 180) % 360;
-                        windLayer = L.polygon([
-                            latlng,
-                            calculatePointOnCircle(latlng, 200, gasTravelDirection - 22.5),
-                            calculatePointOnCircle(latlng, 200, gasTravelDirection + 22.5)
-                        ], { color: 'orange', fillColor: 'orange', fillOpacity: 0.2, weight: 1, dashArray: '5, 5' }).addTo(map);
-                        
-                        const windIndicatorText = L.divIcon({
-                            className: 'wind-text-indicator',
-                            html: `<div style="font-weight:bold; font-size:12px; color:orange; text-shadow: 0 0 2px white, 0 0 2px white;">Axe du vent</div>`,
-                            iconSize: [100, 20],
-                            iconAnchor: [50, 10]
-                        });
-                        const windMarker = L.marker(calculatePointOnCircle(latlng, 210, gasTravelDirection), { icon: windIndicatorText }).addTo(map);
-
-                        perimeterLayers.push(windLayer, windMarker);
-                    }
-                    
-                    if (circle100m) {
-                        map.flyToBounds(circle100m.getBounds());
-                    } else {
-                        const group = new L.featureGroup([sourceMarker, ...perimeterLayers]);
-                        if (group.getLayers().length > 0) {
-                           map.flyToBounds(group.getBounds().pad(0.2));
-                        }
-                    }
-
-                } finally {
-                    clearInterval(thinkingInterval);
-                    loader.classList.remove('visible');
-                    isUpdating = false;
-                }
-            }
-
-            window.resetMap = function() {
-                if (sourceMarker) map.removeLayer(sourceMarker);
-                perimeterLayers.forEach(layer => map.removeLayer(layer));
-                if (windLayer) map.removeLayer(windLayer);
-                sourceMarker = null;
-                perimeterLayers = [];
-                windLayer = null;
-            }
-
-            // --- GESTIONNAIRES D'ÉVÉNEMENTS ---
-            map.on('click', (e) => updateMap(e.latlng, false));
-
-            ['pgr50m', 'pgr100m', 'cspe110m', 'cspe180m'].forEach(id => {
-                document.getElementById(id).addEventListener('change', () => {
-                    if (sourceMarker) updateMap(sourceMarker.getLatLng(), false);
+                document.getElementById('question-text').textContent = questionData.question;
+                const answersContainer = document.getElementById('answers-container');
+                answersContainer.innerHTML = '';
+                questionData.answers.forEach(answer => {
+                    const card = document.createElement('div');
+                    card.className = 'answer-card';
+                    card.textContent = answer.text;
+                    card.addEventListener('click', () => selectAnswer(answer.tags));
+                    answersContainer.appendChild(card);
                 });
-            });
 
-            // LOGIQUE POUR LE MODE NUIT
-            const body = document.querySelector('body');
-            const btn = document.querySelector('.btn');
-            const icon = document.querySelector('.btn__icon');
+                gsap.fromTo(quizContent, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4 });
+            }});
+        }
+        
+        function selectAnswer(tags) {
+            state.userTags.push(...tags);
+            state.currentQuestion++;
 
-            function store(value){
-                localStorage.setItem('dark-mode', value);
+            if (state.currentQuestion < quizQuestions.length) {
+                displayQuestion();
+            } else {
+                document.getElementById('progress-bar-inner').style.width = `100%`;
+                calculateAndShowResult();
             }
+        }
 
-            function load(){
-                const darkMode = localStorage.getItem('dark-mode');
-                if(!darkMode){
-                    store(false);
-                    icon.classList.add('fa-sun');
-                } else if( darkMode == 'true'){
-                    body.classList.add('dark-mode');
-                    icon.classList.add('fa-moon');
-                } else if(darkMode == 'false'){
-                    icon.classList.add('fa-sun');
-                }
-            }
-
-            load();
-
-            btn.addEventListener('click', () => {
-                body.classList.toggle('dark-mode');
-                icon.classList.add('animated');
-                store(body.classList.contains('dark-mode'));
-                if(body.classList.contains('dark-mode')){
-                    icon.classList.remove('fa-sun');
-                    icon.classList.add('fa-moon');
-                }else{
-                    icon.classList.remove('fa-moon');
-                    icon.classList.add('fa-sun');
-                }
-                setTimeout( () => {
-                    icon.classList.remove('animated');
-                }, 500)
-            });
-
-            // NOUVELLE LOGIQUE POUR LA LÉGENDE RÉ rétractable
-            const infoPanel = document.getElementById('info-panel');
-            const legendToggle = document.getElementById('legend-toggle');
-
-            legendToggle.addEventListener('click', () => {
-                infoPanel.classList.toggle('collapsed');
-            });
-
-
-            window.geolocate = function() {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
-                            map.flyTo(latlng, 16);
-                            updateMap(latlng, true);
-                        },
-                        (error) => {
-                            alert(`Échec de la géolocalisation: ${error.message}`);
-                        },
-                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                    );
-                } else {
-                    alert("La géolocalisation n'est pas prise en charge par votre navigateur.");
-                }
-            }
+        function calculateAndShowResult() {
+            const tagCounts = state.userTags.reduce((acc, tag) => {
+                acc[tag] = (acc[tag] || 0) + 1;
+                return acc;
+            }, {});
             
-            window.shareSituation = function() {
-                if (!sourceMarker) {
-                    alert("Veuillez d'abord définir un point sur la carte.");
-                    return;
-                }
-                const lat = sourceMarker.getLatLng().lat.toFixed(5);
-                const lng = sourceMarker.getLatLng().lng.toFixed(5);
-                const subject = "Situation Tactique FLASH PGR";
-                let body = `Point d'origine de la fuite :\nLat: ${lat}, Lng: ${lng}\n\n`;
-                if (lastWindData) {
-                    body += `Vent : Vient du ${degreesToCardinal(lastWindData.deg)} (${lastWindData.deg}°) à environ ${lastWindData.speed.toFixed(1)} km/h.\n\n`;
-                }
-                body += `Lien vers la carte : https://www.openstreetmap.org/#map=18/${lat}/${lng}`;
+            const scoredOpenings = openingsDB.map(opening => {
+                const score = opening.tags.reduce((acc, tag) => acc + (tagCounts[tag] || 0), 0);
+                return { ...opening, score };
+            }).sort((a, b) => b.score - a.score);
+
+            const [mainOpening, ...secondaryOpenings] = scoredOpenings;
+            
+            gsap.to(quizSection, { opacity: 0, duration: 0.5, onComplete: () => {
+                quizSection.classList.add('hidden');
+                resultatSection.classList.remove('hidden');
                 
-                const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                window.location.href = mailtoLink;
-            }
-            
-            // Initialiser le widget météo pour Vienne au chargement
-            updateWeatherWidget(VIENNE_COORDS.lat, VIENNE_COORDS.lon);
-            
-            // Ajout de l'échelle et des coordonnées
-            L.control.scale({ imperial: false }).addTo(map);
-            const coordsWidget = document.getElementById('coords-widget');
-            map.on('mousemove', (e) => {
-                if(coordsWidget) {
-                    coordsWidget.innerHTML = `Lat: ${e.latlng.lat.toFixed(5)}, Lng: ${e.latlng.lng.toFixed(5)}`;
-                }
-            });
-        });
+                const primaryTag = Object.keys(tagCounts).sort((a,b) => tagCounts[b] - tagCounts[a])[0] || "Polyvalent";
+                
+                document.getElementById('profile-title').textContent = `Votre profil : Le ${primaryTag}`;
+                document.getElementById('opening-name').textContent = mainOpening.nom;
+                document.getElementById('opening-description').textContent = mainOpening.description;
+                document.getElementById('opening-reasoning').textContent = mainOpening.profilUtilisateur;
+                
+                // ================== LA CORRECTION EST ICI ==================
+                Chessboard('board', {
+                    position: mainOpening.fen,
+                    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png' // <-- URL Corrigée et fiable
+                });
+                // =========================================================
+
+                const secondaryContainer = document.getElementById('secondary-recommendations');
+                secondaryContainer.innerHTML = `<h2>Autres suggestions pour vous</h2><div class="recommendations-grid"></div>`;
+                const grid = secondaryContainer.querySelector('.recommendations-grid');
+                
+                secondaryOpenings.slice(0, 3).forEach(op => {
+                    const card = document.createElement('div');
+                    card.className = 'secondary-card';
+                    card.innerHTML = `<h4>${op.nom}</h4><p style="font-size: 0.8rem; margin-top: 0.5rem;">Style : ${op.tags.join(', ')}</p>`;
+                    grid.appendChild(card);
+                });
+
+                gsap.from("#resultat-content > *", { opacity: 0, y: 20, duration: 0.6, stagger: 0.2 });
+            }});
+        }
+
+        function resetQuiz() {
+            gsap.to(resultatSection, { opacity: 0, duration: 0.5, onComplete: () => {
+                resultatSection.classList.add('hidden');
+                accueilSection.classList.remove('hidden');
+                
+                // Reset state
+                state.currentQuestion = 0;
+                state.userTags = [];
+                document.getElementById('progress-bar-inner').style.width = '0%';
+                document.getElementById('board').innerHTML = ''; // Vider l'échiquier
+                
+                gsap.from(accueilSection, { opacity: 0, duration: 0.5 });
+            }});
+        }
+    });
     </script>
 </body>
 </html>
-```
